@@ -10,6 +10,7 @@ import (
 
 func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+	r.MaxMultipartMemory = 10 << 20
 
 	// dependency injection
 	pdfRepo       := repository.NewPdfRepository(db)

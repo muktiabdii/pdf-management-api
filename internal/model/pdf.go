@@ -71,9 +71,10 @@ type ListPdfResponse struct {
 }
 
 type BaseResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
-	Data    any    `json:"data,omitempty"`
+	Success   bool   `json:"success"`
+	Message   string `json:"message,omitempty"`
+	ErrorCode string `json:"error_code,omitempty"`
+	Data      any    `json:"data,omitempty"`
 }
 
 // helper — convert entity ke response DTO

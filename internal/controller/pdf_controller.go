@@ -59,31 +59,27 @@ func (c *PdfController) UploadPdf(ctx *gin.Context) {
 
 	result, err := c.service.UploadPdf(ctx.Request.Context(), fileHeader)
 	if err != nil {
+		// Perbaikan: Gunakan BaseResponse statt gin.H
+		resp := model.BaseResponse{Success: false}
+		status := http.StatusInternalServerError
+
 		switch err.Error() {
 		case "FILE_TOO_LARGE":
-			ctx.JSON(http.StatusRequestEntityTooLarge, gin.H{
-				"success":    false,
-				"message":    "File size exceeds maximum limit (10MB)",
-				"error_code": "FILE_TOO_LARGE",
-			})
+			status = http.StatusRequestEntityTooLarge
+			resp.ErrorCode = "FILE_TOO_LARGE"
+			resp.Message = "File size exceeds maximum limit (10MB)"
 		case "INVALID_EXTENSION":
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"success":    false,
-				"message":    "Only .pdf files are allowed",
-				"error_code": "INVALID_EXTENSION",
-			})
+			status = http.StatusBadRequest
+			resp.ErrorCode = "INVALID_EXTENSION"
+			resp.Message = "Only .pdf files are allowed"
 		case "INVALID_MIME_TYPE":
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"success":    false,
-				"message":    "File must be a valid PDF (application/pdf)",
-				"error_code": "INVALID_MIME_TYPE",
-			})
+			status = http.StatusBadRequest
+			resp.ErrorCode = "INVALID_MIME_TYPE"
+			resp.Message = "File must be a valid PDF (application/pdf)"
 		default:
-			ctx.JSON(http.StatusInternalServerError, model.BaseResponse{
-				Success: false,
-				Message: "failed to upload pdf: " + err.Error(),
-			})
+			resp.Message = "failed to upload pdf: " + err.Error()
 		}
+		ctx.JSON(status, resp)
 		return
 	}
 
@@ -105,7 +101,6 @@ func (c *PdfController) ListPdf(ctx *gin.Context) {
 		return
 	}
 
-	// validasi nilai status jika diisi
 	if req.Status != "" {
 		validStatus := map[string]bool{
 			"CREATED":  true,
@@ -130,16 +125,16 @@ func (c *PdfController) ListPdf(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success":    true,
-		"data":       result.Data,
-		"pagination": result.Pagination,
+	// Perbaikan: Ganti gin.H dengan BaseResponse agar konsisten
+	ctx.JSON(http.StatusOK, model.BaseResponse{
+		Success: true,
+		Message: "PDF list fetched successfully",
+		Data:    result, // result di sini biasanya berisi {data: [], pagination: {}}
 	})
 }
 
 // DeletePdf — DELETE /api/pdf/:id
 func (c *PdfController) DeletePdf(ctx *gin.Context) {
-	// parse id dari URL param
 	idStr := ctx.Param("id")
 	idInt, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -152,23 +147,22 @@ func (c *PdfController) DeletePdf(ctx *gin.Context) {
 
 	result, err := c.service.DeletePdf(ctx.Request.Context(), uint(idInt))
 	if err != nil {
+		resp := model.BaseResponse{Success: false}
+		status := http.StatusInternalServerError
+
 		switch {
 		case errors.Is(err, repository.ErrNotFound):
-			ctx.JSON(http.StatusNotFound, model.BaseResponse{
-				Success: false,
-				Message: "pdf file not found",
-			})
+			status = http.StatusNotFound
+			resp.Message = "pdf file not found"
+			resp.ErrorCode = "NOT_FOUND"
 		case errors.Is(err, repository.ErrAlreadyDeleted):
-			ctx.JSON(http.StatusConflict, model.BaseResponse{
-				Success: false,
-				Message: "pdf file already deleted",
-			})
+			status = http.StatusConflict
+			resp.Message = "pdf file already deleted"
+			resp.ErrorCode = "ALREADY_DELETED"
 		default:
-			ctx.JSON(http.StatusInternalServerError, model.BaseResponse{
-				Success: false,
-				Message: "failed to delete pdf: " + err.Error(),
-			})
+			resp.Message = "failed to delete pdf: " + err.Error()
 		}
+		ctx.JSON(status, resp)
 		return
 	}
 
