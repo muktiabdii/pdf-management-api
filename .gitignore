@@ -1,0 +1,32 @@
+# Binary / Executable files
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test binaries
+*.test
+
+# Dependency directories
+vendor/
+
+# Configuration / Secrets
+.env
+*.env
+
+# Docker
+.docker/
+pgdata/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS metadata
+.DS_Store
+Thumbs.db
