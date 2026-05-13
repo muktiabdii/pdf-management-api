@@ -6,7 +6,8 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
-
+	"io"
+	
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -59,4 +60,20 @@ func DeleteFile(ctx context.Context, key string) error {
 		return fmt.Errorf("failed to delete file from S3: %w", err)
 	}
 	return nil
+}
+
+func UploadFileFromReader(ctx context.Context, key string, reader io.Reader, contentType string, size int64) (string, error) {
+	_, err := S3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:        aws.String(BucketName),
+		Key:           aws.String(key),
+		Body:          reader,
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(size),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file to S3: %w", err)
+	}
+
+	url := fmt.Sprintf("/uploads/pdf/%s", key)
+	return url, nil
 }
