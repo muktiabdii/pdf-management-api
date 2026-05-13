@@ -11,15 +11,20 @@ import (
 	"github.com/muktiabdii/pdf-management-api/internal/service"
 )
 
+// PdfController handles HTTP requests related to PDF operations.
 type PdfController struct {
+	// service is the business logic handler for PDF operations
 	service service.PdfService
 }
 
+// NewPdfController creates a new instance of PdfController.
 func NewPdfController(service service.PdfService) *PdfController {
 	return &PdfController{service: service}
 }
 
-// GeneratePdf — POST /api/pdf/generate
+// GeneratePdf handles POST /api/pdf/generate requests.
+// It accepts a GeneratePdfRequest, generates a PDF document, uploads it to S3,
+// and returns the saved PDF metadata.
 func (c *PdfController) GeneratePdf(ctx *gin.Context) {
 	var req model.GeneratePdfRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -46,7 +51,9 @@ func (c *PdfController) GeneratePdf(ctx *gin.Context) {
 	})
 }
 
-// UploadPdf — POST /api/pdf/upload
+// UploadPdf handles POST /api/pdf/upload requests.
+// It validates the uploaded file (size, extension, MIME type),
+// uploads it to S3, and saves the file metadata to the database.
 func (c *PdfController) UploadPdf(ctx *gin.Context) {
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
@@ -59,7 +66,7 @@ func (c *PdfController) UploadPdf(ctx *gin.Context) {
 
 	result, err := c.service.UploadPdf(ctx.Request.Context(), fileHeader)
 	if err != nil {
-		// Perbaikan: Gunakan BaseResponse statt gin.H
+		// Use a standard response format for all error cases
 		resp := model.BaseResponse{Success: false}
 		status := http.StatusInternalServerError
 
@@ -90,7 +97,8 @@ func (c *PdfController) UploadPdf(ctx *gin.Context) {
 	})
 }
 
-// ListPdf — GET /api/pdf/list
+// ListPdf handles GET /api/pdf/list requests.
+// It retrieves a paginated list of PDF files with optional status filtering.
 func (c *PdfController) ListPdf(ctx *gin.Context) {
 	var req model.ListPdfRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -125,15 +133,16 @@ func (c *PdfController) ListPdf(ctx *gin.Context) {
 		return
 	}
 
-	// Perbaikan: Ganti gin.H dengan BaseResponse agar konsisten
+	// Use standard response format for consistency
 	ctx.JSON(http.StatusOK, model.BaseResponse{
 		Success: true,
 		Message: "PDF list fetched successfully",
-		Data:    result, // result di sini biasanya berisi {data: [], pagination: {}}
+		Data:    result, 
 	})
 }
 
-// DeletePdf — DELETE /api/pdf/:id
+// DeletePdf handles DELETE /api/pdf/:id requests.
+// It soft-deletes a PDF file by ID and removes it from the database.
 func (c *PdfController) DeletePdf(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	idInt, err := strconv.ParseUint(idStr, 10, 64)
