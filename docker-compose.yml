@@ -23,8 +23,6 @@ services:
       - db
     env_file:
       - .env
-    volumes:
-      - .:/app 
 
 volumes:
   pgdata:
